@@ -8,6 +8,7 @@ from keras import backend as K
 #Most of this is taken from online example to see how well it works - will adjust as we go along.
 
 img_width, img_height = 128, 128
+#The specs for this model
 
 train_data_dir = '128img/train'
 validation_data_dir = '128img/validation'
@@ -21,8 +22,9 @@ if K.image_data_format() == 'channels_first':
 else:
     input_shape = (img_width, img_height, 3)
 
-# Double number of filters per convolution.
+# This is the actual model. I've modelled it using a auto-encoder fashion, which is what previous publications has done so far.
 
+# Double number of filters per convolution.
 model = Sequential()
 model.add(Conv2D(32, (3, 3), input_shape=input_shape))
 model.add(Activation('relu'))
@@ -48,7 +50,7 @@ model.add(Conv2D(32, (3, 3)))
 model.add(Activation('relu'))
 model.add(UpSampling2D(size=(2, 2)))
 
-
+#Maybe not flatten? Dense seems to be causing issues too - noted
 model.add(Flatten())
 model.add(Dense(64))
 model.add(Activation('linear'))
@@ -60,16 +62,17 @@ model.compile(loss='categorical_crossentropy',
               optimizer='rmsprop',
               metrics=['accuracy'])
 
-# this is the augmentation configuration we will use for training
+# this is the augmentation configuration we will use for training. Preprocessing for image.
 train_datagen = ImageDataGenerator(
     rescale=1. / 255,
     shear_range=0.2,
     zoom_range=0.2,
+    color_mode = "grayscale",       #Our 3 channel image converted to grayscale. Idk why we didn't save it as grayscale
     horizontal_flip=True)
 
 # this is the augmentation configuration we will use for testing:
 # only rescaling
-test_datagen = ImageDataGenerator(rescale=1. / 255)
+test_datagen = ImageDataGenerator(rescale=1. / 255) #Rescaling it to be between 0 and 1, easier for the algorithim
 
 train_generator = train_datagen.flow_from_directory(
     train_data_dir,
