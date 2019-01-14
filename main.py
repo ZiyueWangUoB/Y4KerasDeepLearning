@@ -67,12 +67,12 @@ train_datagen = ImageDataGenerator(
     rescale=1. / 255,
     shear_range=0.2,
     zoom_range=0.2,
-    color_mode = "grayscale",       #Our 3 channel image converted to grayscale. Idk why we didn't save it as grayscale
+    color_mode="grayscale",       #Our 3 channel image converted to grayscale. Idk why we didn't save it as grayscale
     horizontal_flip=True)
 
 # this is the augmentation configuration we will use for testing:
-# only rescaling
-test_datagen = ImageDataGenerator(rescale=1. / 255) #Rescaling it to be between 0 and 1, easier for the algorithim
+# only rescaling (uncomment if used)
+#test_datagen = ImageDataGenerator(rescale=1. / 255) #Rescaling it to be between 0 and 1, easier for the algorithim
 
 train_generator = train_datagen.flow_from_directory(
     train_data_dir,
