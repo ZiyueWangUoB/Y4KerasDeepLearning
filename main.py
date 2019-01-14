@@ -2,7 +2,7 @@ from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import Conv2D, MaxPooling2D, UpSampling2D
 from tensorflow.python.keras.layers import Activation, Dropout, Flatten, Dense
-from keras import backend as K
+from tensorflow.python.keras import backend as K
 
 # dimensions of our images.
 #Most of this is taken from online example to see how well it works - will adjust as we go along.
@@ -72,7 +72,7 @@ train_datagen = ImageDataGenerator(
 
 # this is the augmentation configuration we will use for testing:
 # only rescaling (uncomment if used)
-#test_datagen = ImageDataGenerator(rescale=1. / 255) #Rescaling it to be between 0 and 1, easier for the algorithim
+test_datagen = ImageDataGenerator(rescale=1. / 255) #Rescaling it to be between 0 and 1, easier for the algorithim
 
 train_generator = train_datagen.flow_from_directory(
     train_data_dir,
