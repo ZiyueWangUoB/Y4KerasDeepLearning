@@ -17,7 +17,7 @@ numpy.random.seed(seed)
 #Load data from input, gotta write something for this. block
 
 train_data_dir = '128img/train'
-validation_data_dir = '128img/train'
+validation_data_dir = '128img/validation'
 nb_train_samples = 1400
 nb_validation_samples=600
 epochs=50
