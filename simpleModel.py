@@ -35,31 +35,30 @@ num_classes = 9 				#9 different categories for the output, this is tempoary wor
 #Let's define the model (simple) 
 
 def simple_model():
-	#create model - custom
-        model = Sequential()
-            
-            
-		#Adding additional convolution + maxpool layers 15/1/19
-        model.add(Conv2D(32, (3,3), input_shape=(img_width,img_height,1)))
-		model.add(Activation('relu'))
-		model.add(MaxPooling2D(pool_size=(2,2)))
-		model.add(Dropout(0.2))		
+    #create model - custom
+        
+    model = Sequential()    
+	#Adding additional convolution + maxpool layers 15/1/19
+    model.add(Conv2D(32, (3,3), input_shape=(img_width,img_height,1)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2,2)))
+    model.add(Dropout(0.2))		
 
-		model.add(Conv2D(64, (3,3)))
-		model.add(Activation('relu')
-		model.add(MaxPooling2D(pool_size=(2,2)))
-		model.add(Dropout(0.2))
+    model.add(Conv2D(64, (3,3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2,2)))
+    model.add(Dropout(0.2))
 		
 
 		#Possible dense layer with our 128x128 number of pixels is too much, too high. We should add a few convolutional and maxpool layers beforehand.
-        model.add(Dense(64,			#dimensionality of output space
+    model.add(Dense(64,			#dimensionality of output space
 			#input_shape=(128,128,1),		#Commented out as only the first layer needs input shape. 
-			kernel_initializer='normal'))
-        model.add(Activation('relu'))
-        model.add(Flatten())
-        model.add(Dense(9, kernel_initializer='normal', activation='softmax'))
-        model.compile(loss='categorical_crossentropy',optimizer='adam',metrics=['accuracy'])
-        return model
+		kernel_initializer='normal'))
+    model.add(Activation('relu'))
+    model.add(Flatten())
+    model.add(Dense(9, kernel_initializer='normal', activation='softmax'))
+    model.compile(loss='categorical_crossentropy',optimizer='SGD',metrics=['accuracy'])
+    return model
 
 
 
@@ -74,7 +73,7 @@ test_datagen = ImageDataGenerator(rescale=1./255)
 
 #Images should be inputed the same way as the code found in main to avoid confusion
 train_generator = train_datagen.flow_from_directory(
-	validation_data_dir,
+	train_data_dir,
         color_mode='grayscale',	
 	target_size=(img_width, img_height),
 	batch_size=batch_size,
