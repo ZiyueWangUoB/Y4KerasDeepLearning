@@ -64,8 +64,7 @@ def simple_model():
 
 #After data is inputed, we should augment the data in some way.
 train_datagen = ImageDataGenerator(
-	rescale=1./255,					#Normalized inputs from 0-255 to 0-1
-	zoom_range=0.2,		
+	rescale=1./255,					#Normalized inputs from 0-255 to 0-1		
 	horizontal_flip=True,
 	vertical_flip=True)
 
@@ -93,10 +92,10 @@ model = simple_model()
 
 model.fit_generator(
 	train_generator,
-	steps_per_epoch=nb_train_samples // batch_size,
+	steps_per_epoch=nb_train_samples / batch_size,
 	epochs=epochs,
 	validation_data=validation_generator,
-	validation_steps=nb_validation_samples // batch_size)
+	validation_steps=nb_validation_samples / batch_size)
 
 model.save_weights('very_simple.h5')
 K.clear_session()
