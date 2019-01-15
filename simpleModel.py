@@ -20,8 +20,8 @@ train_data_dir = '128img/train'
 validation_data_dir = '128img/validation'
 nb_train_samples = 1400
 nb_validation_samples=600
-epochs=50
-batch_size=8				#Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
+epochs=20
+batch_size=32				#Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
 
 
 img_width, img_height = 128, 128
@@ -54,7 +54,7 @@ def simple_model():
     model.add(Dense(64,			#dimensionality of output space
 			#input_shape=(128,128,1),		#Commented out as only the first layer needs input shape. 
 		kernel_initializer='normal'))
-    model.add(Activation('relu'))
+    model.add(Activation('linear'))
     model.add(Flatten())
     model.add(Dense(9, kernel_initializer='normal', activation='softmax'))
     model.compile(loss='categorical_crossentropy',optimizer='SGD',metrics=['accuracy'])
@@ -92,10 +92,8 @@ model = simple_model()
 
 model.fit_generator(
 	train_generator,
-	steps_per_epoch=nb_train_samples / batch_size,
 	epochs=epochs,
-	validation_data=validation_generator,
-	validation_steps=nb_validation_samples / batch_size)
+	validation_data=validation_generator)
 
 model.save_weights('very_simple.h5')
 K.clear_session()
