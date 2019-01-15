@@ -6,7 +6,7 @@ Adapted by Ziyue Wang for Y4 project. Created on 14/1/2019
 import numpy
 from tensorflow.python.keras.datasets import mnist
 from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Dropout, Activation, Flatten
+from tensorflow.python.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D, UpSampling2D
 from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.python.keras import backend as K
 
@@ -21,7 +21,7 @@ validation_data_dir = '128img/train'
 nb_train_samples = 1400
 nb_validation_samples=600
 epochs=50
-batch_size=16				#Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
+batch_size=8				#Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
 
 
 img_width, img_height = 128, 128
@@ -35,10 +35,25 @@ num_classes = 9 				#9 different categories for the output, this is tempoary wor
 #Let's define the model (simple) 
 
 def simple_model():
-	#create model
+	#create model - custom
         model = Sequential()
-        model.add(Dense(num_pixels,			#dimensionality of output space
-			input_shape=(128,128,1),
+		
+				
+		#Adding additional convolution + maxpool layers 15/1/19
+		model.add(Conv2D(32, (3,3), input_shape=(img_width,img_height,1)))
+		model.add(Activation('relu')
+		model.add(MaxPooling2D(pool_size=(2,2)))
+		model.add(Dropout(0.2))		
+
+		model.add(Conv2D(64, (3,3)))
+		model.add(Activation('relu')
+		model.add(MaxPooling2D(pool_size=(2,2)))
+		model.add(Dropout(0.2))
+		
+
+		#Possible dense layer with our 128x128 number of pixels is too much, too high. We should add a few convolutional and maxpool layers beforehand.
+        model.add(Dense(64,			#dimensionality of output space
+			#input_shape=(128,128,1),		#Commented out as only the first layer needs input shape. 
 			kernel_initializer='normal'))
         model.add(Activation('relu'))
         model.add(Flatten())
