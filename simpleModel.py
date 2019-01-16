@@ -42,20 +42,20 @@ def simple_model():
         
     model = Sequential()    
 	#Adding additional convolution + maxpool layers 15/1/19
-    model.add(Conv2D(32, (5,5), input_shape=(img_width,img_height,1)))
+    model.add(Conv2D(64, (3,3), input_shape=(img_width,img_height,1)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2,2)))
+    model.add(Dropout(0.6))
+
+    model.add(Conv2D(128, (3,3)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2,2)))
     model.add(Dropout(0.4))
 
-    model.add(Conv2D(64, (3,3)))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(0.2))
-
 
     model.add(Flatten())		
 		#Possible dense layer with our 128x128 number of pixels is too much, too high. We should add a few convolutional and maxpool layers beforehand.
-    model.add(Dense(512,			#dimensionality of output space
+    model.add(Dense(64,			#dimensionality of output space
 			#input_shape=(128,128,1),		#Commented out as only the first layer needs input shape. 
 		))
     model.add(Activation('relu'))
@@ -91,7 +91,7 @@ validation_generator = test_datagen.flow_from_directory(
 	class_mode='categorical',
 	shuffle=True)
 
-callbacks = [EarlyStopping(monitor='acc', patience = 5),
+callbacks = [EarlyStopping(monitor='val_loss', patience = 10),
             ModelCheckpoint(filepath='best_model.h5', monitor='acc', save_best_only=True)]
 
 
