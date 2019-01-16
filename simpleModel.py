@@ -4,11 +4,14 @@ Adapted by Ziyue Wang for Y4 project. Created on 14/1/2019
 '''
 
 import numpy
-from tensorflow.python.keras.datasets import mnist
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D, UpSampling2D
-from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.python.keras import backend as K
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D, UpSampling2D
+from keras.preprocessing.image import ImageDataGenerator
+from keras import backend as K
+from keras.optimizers import Adam
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+
 
 #Writing a seed for reproducibility
 seed = 1
@@ -20,8 +23,8 @@ train_data_dir = '128img/train'
 validation_data_dir = '128img/validation'
 nb_train_samples = 1400
 nb_validation_samples=600
-epochs=20
-batch_size=32				#Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
+epochs=100
+batch_size=128				#Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
 
 
 img_width, img_height = 128, 128
@@ -39,25 +42,26 @@ def simple_model():
         
     model = Sequential()    
 	#Adding additional convolution + maxpool layers 15/1/19
-    model.add(Conv2D(32, (3,3), input_shape=(img_width,img_height,1)))
+    model.add(Conv2D(32, (5,5), input_shape=(img_width,img_height,1)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(0.2))		
+    model.add(Dropout(0.4))
 
     model.add(Conv2D(64, (3,3)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2,2)))
     model.add(Dropout(0.2))
-		
 
+
+    model.add(Flatten())		
 		#Possible dense layer with our 128x128 number of pixels is too much, too high. We should add a few convolutional and maxpool layers beforehand.
-    model.add(Dense(64,			#dimensionality of output space
+    model.add(Dense(512,			#dimensionality of output space
 			#input_shape=(128,128,1),		#Commented out as only the first layer needs input shape. 
-		kernel_initializer='normal'))
-    model.add(Activation('linear'))
-    model.add(Flatten())
-    model.add(Dense(9, kernel_initializer='normal', activation='softmax'))
-    model.compile(loss='categorical_crossentropy',optimizer='SGD',metrics=['accuracy'])
+		))
+    model.add(Activation('relu'))
+    #model.add(Dropout(0.2))
+    model.add(Dense(num_classes, activation='softmax'))
+    model.compile(loss='categorical_crossentropy',optimizer='RMSProp',metrics=['accuracy'])
     return model
 
 
@@ -87,24 +91,22 @@ validation_generator = test_datagen.flow_from_directory(
 	class_mode='categorical',
 	shuffle=True)
 
+callbacks = [EarlyStopping(monitor='acc', patience = 5),
+            ModelCheckpoint(filepath='best_model.h5', monitor='acc', save_best_only=True)]
+
+
 #build the model
 model = simple_model()
 
 model.fit_generator(
 	train_generator,
 	epochs=epochs,
+        callbacks=callbacks,
 	validation_data=validation_generator)
 
 model.save_weights('very_simple.h5')
 K.clear_session()
 
-
-'''
-A need to flatten the image for multi-layer perveptron models
-flatten 128*128 pixel images.
-Since this is taken off the example of using MINST number classification, they use the MINST data which has the labels as their first array component [0]
-Need to find workaround for this. Possible just use the model part of the example?
-'''
 
 
 
