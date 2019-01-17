@@ -1,5 +1,4 @@
 '''
-Code taken from the example found https://machinelearningmastery.com/handwritten-digit-recognition-using-convolutional-neural-networks-python-keras/.
 Adapted by Ziyue Wang for Y4 project. Created on 14/1/2019
 '''
 
