@@ -47,14 +47,19 @@ def simple_model():
     model.add(Conv2D(32, (3,3), input_shape=(img_width,img_height,1)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(0.4))
+    model.add(Dropout(0.2))
 
     model.add(Conv2D(64, (3,3)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.))
     
     model.add(Conv2D(128, (3,3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2,2)))
+    model.add(Dropout(0.2))
+     
+    model.add(Conv2D(256, (3,3)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2,2)))
     model.add(Dropout(0.2))
@@ -62,15 +67,14 @@ def simple_model():
     model.add(Flatten())		
 		#Possible dense layer with our 128x128 number of pixels is too much, too high. We should add a few convolutional and maxpool layers beforehand.
     
-    model.add(Dense(64,			#dimensionality of output space
+    model.add(Dense(128,			#dimensionality of output space
 			#input_shape=(128,128,1),		#Commented out as only the first layer needs input shape. 
 		))
-    model.add(Activation('linear'))
+    model.add(Activation('relu'))
     model.add(Dropout(0.2))
     
 
     model.add(Dense(num_classes, activation='softmax'))
-    model.add(Dropout(0.2))
     model.compile(loss='categorical_crossentropy',optimizer='RMSProp',metrics=['accuracy'])
     return model
 
@@ -118,7 +122,7 @@ validation_generator = test_datagen.flow_from_directory(
 	class_mode='categorical',
 	shuffle=True)
 
-callbacks = [EarlyStopping(monitor='val_loss', patience = 1),
+callbacks = [EarlyStopping(monitor='val_loss', patience = 8),
             ModelCheckpoint(filepath='best_model.h5', monitor='acc', save_best_only=True)]
 
 
