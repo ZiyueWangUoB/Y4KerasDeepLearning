@@ -19,12 +19,12 @@ numpy.random.seed(seed)
 
 #Load data from input, gotta write something for this. block
 
-train_data_dir = '128img/train'
-validation_data_dir = '128img/validation'
-nb_train_samples = 1400
-nb_validation_samples=600
+train_data_dir = '128ImagesBasic/train'
+validation_data_dir = '128ImagesBasic/validation'
+#nb_train_samples = 1400
+#nb_validation_samples=600
 epochs=100
-batch_size=50				#Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
+batch_size=100				#Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
 
 
 img_width = 128
@@ -47,12 +47,12 @@ def simple_model():
     model.add(Conv2D(32, (3,3), input_shape=(img_width,img_height,1)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.4))
 
     model.add(Conv2D(64, (3,3)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(0.))
+    model.add(Dropout(0.2))
     
     model.add(Conv2D(128, (3,3)))
     model.add(Activation('relu'))
@@ -63,7 +63,14 @@ def simple_model():
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2,2)))
     model.add(Dropout(0.2))
+   
+   # model.add(Conv2D(512, (3,3)))
+    #model.add(Activation('relu'))
+    #model.add(MaxPooling2D(pool_size=(2,2)))
+    #model.add(Dropout(0.2))
     
+
+
     model.add(Flatten())		
 		#Possible dense layer with our 128x128 number of pixels is too much, too high. We should add a few convolutional and maxpool layers beforehand.
     
@@ -71,7 +78,7 @@ def simple_model():
 			#input_shape=(128,128,1),		#Commented out as only the first layer needs input shape. 
 		))
     model.add(Activation('relu'))
-    model.add(Dropout(0.2))
+    #model.add(Dropout(0.2))
     
 
     model.add(Dense(num_classes, activation='softmax'))
