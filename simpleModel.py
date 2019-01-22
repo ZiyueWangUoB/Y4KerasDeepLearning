@@ -18,8 +18,8 @@ numpy.random.seed(seed)
 
 #Load data from input, gotta write something for this. block
 
-train_data_dir = '128ImagesBasic/train'
-validation_data_dir = '128ImagesBasic/validation'
+train_data_dir = '128Binary/train'
+validation_data_dir = '128Binary/validation'
 #nb_train_samples = 1400
 #nb_validation_samples=600
 epochs=100
@@ -43,7 +43,7 @@ def simple_model():
     model = Sequential()    
     	
         #Adding additional convolution + maxpool layers 15/1/19
-    model.add(Conv2D(32, (3,3), input_shape=(img_width,img_height,1)))
+    model.add(Conv2D(32, (5,5), input_shape=(img_width,img_height,1)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2,2)))
     model.add(Dropout(0.4))
@@ -80,8 +80,9 @@ def simple_model():
     #model.add(Dropout(0.2))
     
 
-    model.add(Dense(num_classes, activation='softmax'))
-    model.compile(loss='categorical_crossentropy',optimizer='RMSProp',metrics=['accuracy'])
+    #model.add(Dense(num_classes, activation='softmax'))
+    model.add(Dense(1,activation='sigmoid'))
+    model.compile(loss='binary_crossentropy',optimizer='RMSProp',metrics=['accuracy'])
     return model
 
 
@@ -94,7 +95,7 @@ def vgg_model():
     #for layer in model.layers:          #This freezes the layers before final layer for Transfer Learning
         #layer.trainable = False\
     model.add(Flatten())
-    model.add(Dense(9, activation='softmax'))
+    #model.add(Dense(9, activation='softmax'))
     model.summary()
     model.compile(loss='categorical_crossentropy',optimizer='RMSProp',metrics=['accuracy'])
     #Doesn't work
@@ -116,8 +117,8 @@ train_generator = train_datagen.flow_from_directory(
 	train_data_dir,
         color_mode='grayscale',	
 	target_size=(img_width, img_height),
-	batch_size=batch_size,
-	class_mode='categorical',
+        batch_size=batch_size,
+	class_mode='binary',
 	shuffle=True)
 
 validation_generator = test_datagen.flow_from_directory(
@@ -125,7 +126,7 @@ validation_generator = test_datagen.flow_from_directory(
         color_mode='grayscale',
         target_size=(img_width, img_height),
 	batch_size=batch_size,
-	class_mode='categorical',
+	class_mode='binary',
 	shuffle=True)
 
 callbacks = [EarlyStopping(monitor='val_loss', patience = 8),
@@ -133,6 +134,7 @@ callbacks = [EarlyStopping(monitor='val_loss', patience = 8),
 
 
 #build the model
+#model = simple_model()
 model = simple_model()
 
 history = model.fit_generator(
@@ -143,11 +145,21 @@ history = model.fit_generator(
 
 acc_history = history.history['acc']
 val_acc_history = history.history['val_acc']
+loss_history = history.history['loss']
+val_loss_history = history.history['val_loss']
+
 
 numpy_acc_history = numpy.array(acc_history)
 numpy_val_acc_history = numpy.array(val_acc_history)
+numpy_loss_history = numpy.array(loss_history)
+numpy_val_loss_history = numpy.array(val_loss_history)
+
 numpy.savetxt('acc_history.txt',numpy_acc_history, delimiter=',')
 numpy.savetxt('val_acc_history.txt',numpy_val_acc_history, delimiter=',')
+numpy.savetxt('loss_history.txt',numpy_loss_history, delimiter=',')
+numpy.savetxt('val_loss_history.txt',numpy_val_loss_history, delimiter=',')
+
+
 
 model.save_weights('very_simple.h5')
 K.clear_session()
