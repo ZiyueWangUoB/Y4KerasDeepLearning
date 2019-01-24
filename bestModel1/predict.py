@@ -14,14 +14,14 @@ model.compile(loss='categorical_crossentropy', optimizer='rmsprop',metrics=['acc
 
 u = 0
 totcount = 0
-for imgname in glob.glob('0deform20/*.jpg'):
+for imgname in glob.glob('randBkg_randSigma/7deform/*.jpg'):
     img = image.load_img(imgname, target_size=(img_width, img_height), color_mode='grayscale')
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
     x = x/255
     result = model.predict_classes(x)
     result_list.append(result[0])
-    if result[0] == 0:
+    if result[0] == 6 or result[0] == 7:
         u +=1
     totcount +=1
     #print(totcount,result[0,0])

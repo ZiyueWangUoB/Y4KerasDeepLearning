@@ -18,8 +18,8 @@ numpy.random.seed(seed)
 
 #Load data from input, gotta write something for this. block
 
-train_data_dir = '128Binary/train'
-validation_data_dir = '128Binary/validation'
+train_data_dir = '128ImagesBasic/train'
+validation_data_dir = '128ImagesBasic/validation'
 #nb_train_samples = 1400
 #nb_validation_samples=600
 epochs=100
@@ -81,8 +81,8 @@ def simple_model():
     
 
     #model.add(Dense(num_classes, activation='softmax'))
-    model.add(Dense(1,activation='sigmoid'))
-    model.compile(loss='binary_crossentropy',optimizer='RMSProp',metrics=['accuracy'])
+    model.add(Dense(num_classes,activation='softmax'))
+    model.compile(loss='categorical_crossentropy',optimizer='RMSProp',metrics=['accuracy'])
     return model
 
 
@@ -118,7 +118,7 @@ train_generator = train_datagen.flow_from_directory(
         color_mode='grayscale',	
 	target_size=(img_width, img_height),
         batch_size=batch_size,
-	class_mode='binary',
+	class_mode='categorical',
 	shuffle=True)
 
 validation_generator = test_datagen.flow_from_directory(
@@ -126,7 +126,7 @@ validation_generator = test_datagen.flow_from_directory(
         color_mode='grayscale',
         target_size=(img_width, img_height),
 	batch_size=batch_size,
-	class_mode='binary',
+	class_mode='categorical',
 	shuffle=True)
 
 callbacks = [EarlyStopping(monitor='val_loss', patience = 8),
