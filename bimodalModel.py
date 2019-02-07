@@ -18,12 +18,10 @@ numpy.random.seed(seed)
 
 #Load data from input, gotta write something for this. block
 
-train_data_dirA = '128ImagesBasicA/train'
-train_data_dirB = '128ImagesBasicB/train'
-validation_data_dirA = '128ImagesBasicA/validation'
-validation_data_dirB = '128ImagesBasicB/validation'
+train_data_dirA = '128ImagesBasicA'
+train_data_dirB = '128ImagesBasicB'
 epochs=100
-batch_size=100                #Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
+batch_size=2                #Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
 
 
 img_width = 128
@@ -41,26 +39,27 @@ def LSTM_model():
     #create model - custom
     
     model = Sequential()
-    
+    no_of_img = 2
     #Adding additional convolution + maxpool layers 15/1/19
-    model.add(ConvLSTM2D(32, (5,5), input_shape=(img_width,img_height,1)))
+    model.add(ConvLSTM2D(32, (5,5), batch_input_shape=(batch_size,no_of_img,img_width,img_height,1),return_sequences=True))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2,2)))
     model.add(Dropout(0.4))
+    model.add(TimeDistributed(MaxPooling2D((2,2))))
     
-    model.add(ConvLSTM2D(64, (3,3)))
+
+    model.add(ConvLSTM2D(64, (3,3),return_sequences=True))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2,2)))
+    model.add(TimeDistributed(MaxPooling2D(pool_size=(2,2))))
     model.add(Dropout(0.2))
     
-    model.add(ConvLSTM2D(128, (3,3)))
+    model.add(ConvLSTM2D(128, (3,3),return_sequences=True))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2,2)))
+    model.add(TimeDistributed(MaxPooling2D(pool_size=(2,2))))
     model.add(Dropout(0.2))
     
-    model.add(ConvLSTM2D(256, (3,3)))
+    model.add(ConvLSTM2D(256, (3,3),return_sequences=True))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2,2)))
+    model.add(TimeDistributed(MaxPooling2D(pool_size=(2,2))))
     model.add(Dropout(0.2))
     
     model.add(Flatten())
@@ -77,12 +76,6 @@ def LSTM_model():
     model.add(Dense(num_classes,activation='softmax'))
     model.compile(loss='categorical_crossentropy',optimizer='RMSProp',metrics=['accuracy'])
     return model
-
-def multipleInput_model():
-
-
-
-
 
 
 
@@ -116,7 +109,8 @@ def generate_generator_multiple(generator,dir1, dir2, batch_size, img_width,img_
     while True:
         X1i = genX1.next()
         X2i = genX2.next()
-        yield [X1i[0],X2i[0]],x2i[1]    #Yields both images and their mutual label
+        yield numpy.array([X1i[0],X2i[0]]),X1i[1]    #Yields both images and their mutual label
+
 
 
 train_generator = generate_generator_multiple(generator=train_datagen,
@@ -135,18 +129,24 @@ validation_generator = generate_generator_multiple(generator=test_datagen,
                                                    img_height=img_height,
                                                    subset='validation')
 
+
+
+
 callbacks = [EarlyStopping(monitor='val_loss', patience = 8),
              ModelCheckpoint(filepath='best_model.h5', monitor='acc', save_best_only=True)]
 
 
 #build the model
 #model = simple_model()
-model = simple_model()
+model = LSTM_model()
+model.summary()
 
 history = model.fit_generator(train_generator,
                               epochs=epochs,
+                              steps_per_epoch=200,
                               callbacks=callbacks,
-                              validation_data=validation_generator)
+                              validation_data=validation_generator,
+                              validation_steps=200)
 
 acc_history = history.history['acc']
 val_acc_history = history.history['val_acc']
