@@ -82,8 +82,7 @@ def LSTM_model():
 #After data is inputed, we should augment the data in some way.
 train_datagen = ImageDataGenerator(
                                    rescale=1./255,                    #Normalized inputs from 0-255 to 0-1
-                                   horizontal_flip=True,
-                                   vertical_flip=True)
+                                   validation_split=0.3)
 
 test_datagen = ImageDataGenerator(rescale=1./255)
 
@@ -109,7 +108,9 @@ def generate_generator_multiple(generator,dir1, dir2, batch_size, img_width,img_
     while True:
         X1i = genX1.next()
         X2i = genX2.next()
-        yield numpy.array([X1i[0],X2i[0]]),X1i[1]    #Yields both images and their mutual label
+        s = numpy.stack((X1i[0],X2i[0]))
+        b = numpy.transpose(s,(1,0,2,3,4))
+        yield b,X1i[1]    #Yields both images and their mutual label
 
 
 
@@ -121,7 +122,7 @@ train_generator = generate_generator_multiple(generator=train_datagen,
                                               img_height=img_height,
                                               subset='training')
 
-validation_generator = generate_generator_multiple(generator=test_datagen,
+validation_generator = generate_generator_multiple(generator=train_datagen,
                                                    dir1=train_data_dirA,
                                                    dir2=train_data_dirB,
                                                    batch_size=batch_size,
