@@ -20,8 +20,8 @@ numpy.random.seed(seed)
 
 train_data_dirA = '128ImagesBasicA'
 train_data_dirB = '128ImagesBasicB'
-epochs=100
-batch_size=2                #Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
+epochs=20
+batch_size=10                #Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
 
 
 img_width = 128
@@ -41,31 +41,32 @@ def LSTM_model():
     model = Sequential()
     no_of_img = 2
     #Adding additional convolution + maxpool layers 15/1/19
-    model.add(ConvLSTM2D(32, (5,5), batch_input_shape=(batch_size,no_of_img,img_width,img_height,1),return_sequences=True))
+    model.add(ConvLSTM2D(32, (5,5), input_shape=(no_of_img,img_width,img_height,1),return_sequences=True))
     model.add(Activation('relu'))
-    model.add(Dropout(0.4))
+    #model.add(Dropout(0.4))
     model.add(TimeDistributed(MaxPooling2D((2,2))))
     
-
+    
     model.add(ConvLSTM2D(64, (3,3),return_sequences=True))
     model.add(Activation('relu'))
     model.add(TimeDistributed(MaxPooling2D(pool_size=(2,2))))
-    model.add(Dropout(0.2))
-    
+    #model.add(Dropout(0.2))
+    '''
     model.add(ConvLSTM2D(128, (3,3),return_sequences=True))
     model.add(Activation('relu'))
     model.add(TimeDistributed(MaxPooling2D(pool_size=(2,2))))
-    model.add(Dropout(0.2))
+    #model.add(Dropout(0.2))
     
-    model.add(ConvLSTM2D(256, (3,3),return_sequences=True))
-    model.add(Activation('relu'))
-    model.add(TimeDistributed(MaxPooling2D(pool_size=(2,2))))
-    model.add(Dropout(0.2))
-    
+    #model.add(ConvLSTM2D(256, (3,3),return_sequences=True))
+    #model.add(Activation('relu'))
+    #model.add(TimeDistributed(MaxPooling2D(pool_size=(2,2))))
+    #model.add(Dropout(0.2))
+    '''
+
     model.add(Flatten())
     #Possible dense layer with our 128x128 number of pixels is too much, too high. We should add a few convolutional and maxpool layers beforehand.
     
-    model.add(Dense(128,            #dimensionality of output space
+    model.add(Dense(32,            #dimensionality of output space
                     #input_shape=(128,128,1),        #Commented out as only the first layer needs input shape.
                     ))
     model.add(Activation('relu'))
@@ -74,7 +75,7 @@ def LSTM_model():
                     
                     #model.add(Dense(num_classes, activation='softmax'))
     model.add(Dense(num_classes,activation='softmax'))
-    model.compile(loss='categorical_crossentropy',optimizer='RMSProp',metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy',optimizer='Adam',metrics=['accuracy'])
     return model
 
 
@@ -133,7 +134,7 @@ validation_generator = generate_generator_multiple(generator=train_datagen,
 
 
 
-callbacks = [EarlyStopping(monitor='val_loss', patience = 8),
+callbacks = [EarlyStopping(monitor='val_loss', patience = 3),
              ModelCheckpoint(filepath='best_model.h5', monitor='acc', save_best_only=True)]
 
 
@@ -144,10 +145,10 @@ model.summary()
 
 history = model.fit_generator(train_generator,
                               epochs=epochs,
-                              steps_per_epoch=200,
+                              steps_per_epoch=200 // batch_size,
                               callbacks=callbacks,
                               validation_data=validation_generator,
-                              validation_steps=200)
+                              validation_steps=200 // batch_size)
 
 acc_history = history.history['acc']
 val_acc_history = history.history['val_acc']

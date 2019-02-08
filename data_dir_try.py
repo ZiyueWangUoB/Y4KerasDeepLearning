@@ -45,24 +45,17 @@ def generate_generator_multiple(generator,dir1, dir2, batch_size, img_width,img_
                                           seed=1)
 
 
-
+   
+    
     while True:
         X1i = genX1.next()
         X2i = genX2.next()
         s = numpy.stack((X1i[0],X2i[0]))
         b = numpy.transpose(s,(1,0,2,3,4))
-        return b,X1i[1]    #Yields both images and their mutual label
-
+        yield b,X1i[1]    #Yields both images and their mutual label
 
 img = generate_generator_multiple(train_datagen,train_data_dirA,train_data_dirB,100,128,128,'training')
-img
-img
-print(numpy.shape(img[0]))
-
-
-
-
-
-
+for i in img:
+    print(i[1])
 
 
