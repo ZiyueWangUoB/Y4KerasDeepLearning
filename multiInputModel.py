@@ -5,6 +5,7 @@
 import numpy
 from keras.datasets import mnist
 from keras.models import Sequential
+from keras.layers import AveragePooling2D
 from keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D, TimeDistributed, Add, Average
 from keras.layers import Input, BatchNormalization
 from keras.models import Model
@@ -31,8 +32,8 @@ validate_data_dirB = '128Imagesbkg10B/validation'
 #train_data_dirB = '128ImagesBasicB2'
 
 
-epochs=100
-batch_size=50                #Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
+epochs=150
+batch_size=64                #Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
 
 
 img_width = 128
@@ -53,60 +54,74 @@ def multiInput_model():
     input_2 = Input(shape=(img_width,img_height,1))   
 
     output_1 = Conv2D(32,(5,5), activation='relu')(input_1)
-    output_1 = MaxPooling2D(pool_size=(2,2))(output_1)
-    output_1 = Dropout(0.4)(output_1)
+    output_1 = AveragePooling2D(pool_size=(2,2))(output_1)
+    output_1 = Dropout(0.2)(output_1)
     
        
     output_1 = Conv2D(64,(3,3), activation='relu')(output_1)
     output_1 = MaxPooling2D(pool_size=(2,2))(output_1)
-    output_1 = Dropout(0.2)(output_1)
+    output_1 = Dropout(0.1)(output_1)
     
 
     output_1 = Conv2D(128,(3,3), activation='relu')(output_1)
     output_1 = MaxPooling2D(pool_size=(2,2))(output_1)
-    output_1 = Dropout(0.2)(output_1)
+    output_1 = Dropout(0.1)(output_1)
    
     
-    output_1 = Conv2D(256,(3,3), activation='relu')(output_1)
-    output_1 = MaxPooling2D(pool_size=(2,2))(output_1)
-    output_1 = Dropout(0.2)(output_1)
+    #output_1 = Conv2D(256,(3,3), activation='relu')(output_1)
+    #output_1 = MaxPooling2D(pool_size=(2,2))(output_1)
+    #output_1 = Dropout(0.2)(output_1)
     
 
     output_1 = Flatten()(output_1)
     output_1 = Dense(128,activation='relu')(output_1)
-    #output_1 = Dense(num_classes,activation='softmax')(output_1)
-
+    output_1 = Dense(num_classes,activation='softmax')(output_1)
+    
     
     
     output_2 = Conv2D(32,(5,5), activation='relu')(input_2)
-    output_2 = MaxPooling2D(pool_size=(2,2))(output_2)
-    output_2 = Dropout(0.4)(output_2)
+    output_2 = AveragePooling2D(pool_size=(2,2))(output_2)
+    output_2 = Dropout(0.2)(output_2)
+    
     
     output_2 = Conv2D(64,(3,3), activation='relu')(output_2)
     output_2 = MaxPooling2D(pool_size=(2,2))(output_2)
-    output_2 = Dropout(0.2)(output_2)
+    output_2 = Dropout(0.1)(output_2)
     
     output_2 = Conv2D(128,(3,3), activation='relu')(output_2)
     output_2 = MaxPooling2D(pool_size=(2,2))(output_2)
-    output_2 = Dropout(0.2)(output_2)
+    output_2 = Dropout(0.1)(output_2)
     
     
-    output_2 = Conv2D(256,(3,3), activation='relu')(output_2)
-    output_2 = MaxPooling2D(pool_size=(2,2))(output_2)
-    output_2 = Dropout(0.2)(output_2)
+    #output_2 = Conv2D(256,(3,3), activation='relu')(output_2)
+    #output_2 = MaxPooling2D(pool_size=(2,2))(output_2)
+    #output_2 = Dropout(0.2)(output_2)
     
 
     output_2 = Flatten()(output_2)
     output_2 = Dense(128,activation='relu')(output_2)
-    #output_2 = Dense(num_classes,activation='softmax')(output_2)
+    output_2 = Dense(num_classes,activation='softmax')(output_2)
+    
+
+
 
     inputs = [input_1,input_2]
     outputs = [output_1,output_2]
-   
-    output = concatenate(outputs)
-    output = Dense(num_classes,activation='softmax')(output)
+    
+    #output = concatenate(outputs)
+    output = Average()(outputs)
 
-
+    #output = Conv2D(64,(3,3), activation='relu')(output)
+    #output = AveragePooling2D(pool_size=(2,2))(output)
+    #output = Dropout(0.1)(output)
+    
+    #output = Conv2D(128,(3,3), activation='relu')(output)
+    #output = AveragePooling2D(pool_size=(2,2))(output)
+    #output = Dropout(0.1)(output)
+       
+    #output = Flatten()(output)
+    #output = Dense(128,activation='relu')(output)
+    #output = Dense(num_classes,activation='softmax')(output)
 
     model = Model(inputs,[output])
     model.compile(loss='categorical_crossentropy',optimizer='RMSprop',metrics=['accuracy'])
@@ -164,7 +179,7 @@ validation_generator = generate_generator_multiple(generator=test_datagen,
 
 
 
-callbacks = [EarlyStopping(monitor='val_loss', patience = 10),
+callbacks = [EarlyStopping(monitor='val_loss', patience = 8),
              ModelCheckpoint(filepath='best_model.h5', monitor='acc', save_best_only=True)]
 
 
