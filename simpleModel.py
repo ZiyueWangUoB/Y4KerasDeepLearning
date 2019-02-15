@@ -18,8 +18,8 @@ numpy.random.seed(seed)
 
 #Load data from input, gotta write something for this. block
 
-train_data_dir = '128Imagesbkg10A/train'
-validation_data_dir = '128Imagesbkg10A/validation'
+train_data_dir = '128ImagesNoisyA/train'
+#validation_data_dir = '128ImagesNoisyA/validation'
 #nb_train_samples = 1400
 #nb_validation_samples=600
 epochs=200
@@ -99,9 +99,10 @@ def simple_model():
 
 #After data is inputed, we should augment the data in some way.
 train_datagen = ImageDataGenerator(
-	rescale=1./255,					#Normalized inputs from 0-255 to 0-1		
-	horizontal_flip=True,
-	vertical_flip=True)
+	rescale=1./255,
+        horizontal_flip=True,
+        vertical_flip=True,
+        validation_split=0.3)
 
 test_datagen = ImageDataGenerator(rescale=1./255)
 
@@ -112,15 +113,17 @@ train_generator = train_datagen.flow_from_directory(
 	target_size=(img_width, img_height),
         batch_size=batch_size,
 	class_mode='categorical',
-	shuffle=True)
+	shuffle=True,
+        subset='training')
 
-validation_generator = test_datagen.flow_from_directory(
-	validation_data_dir,  
+validation_generator = train_datagen.flow_from_directory(
+	train_data_dir,  
         color_mode='grayscale',
         target_size=(img_width, img_height),
 	batch_size=batch_size,
 	class_mode='categorical',
-	shuffle=True)
+	shuffle=True,
+        subset='validation')
 
 callbacks = [EarlyStopping(monitor='val_loss', patience = 20),
             ModelCheckpoint(filepath='best_model.h5', monitor='acc', save_best_only=True)]

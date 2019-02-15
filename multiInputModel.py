@@ -15,6 +15,7 @@ from keras import backend as K
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import applications
+from keras.models import load_model
 
 #Writing a seed for reproducibility
 seed = 1
@@ -47,6 +48,7 @@ num_classes = 9                 #9 different categories for the output, this is 
 
 #Let's define the model (simple)
 
+'''
 def multiInput_model():
     #create model - custom
     
@@ -128,6 +130,63 @@ def multiInput_model():
 
     return model
 
+'''
+
+def build_base():
+    
+    input_ = Input(shape=(img_width,img_height,1))
+    
+    output = Conv2D(32,(5,5), activation='relu')(input_)
+    output = AveragePooling2D(pool_size=(2,2))(output)
+    output = Dropout(0.2)(output)
+    
+    
+    output = Conv2D(64,(3,3), activation='relu')(output)
+    output = AveragePooling2D(pool_size=(2,2))(output)
+    output = Dropout(0.1)(output)
+    
+    output = Conv2D(128,(3,3), activation='relu')(output)
+    output = AveragePooling2D(pool_size=(2,2))(output)
+    output = Dropout(0.1)(output)
+      
+
+    output = Flatten()(output)
+    #output = Dense(128,activation='relu')(output)
+    #output = Dense(num_classes,activation='softmax')(output)
+   
+    model = Model(inputs=input_, outputs=output)
+    
+    return input_, output, model
+    
+    
+def transfer_model():
+
+    input_1, output_1, model_1 = build_base()
+    input_2, output_2, model_2 = build_base()
+
+    old_model = load_model('80modelbkg10A/best_model.h5')
+    old_model.layers.pop()
+    old_model.layers.pop()
+
+    model_1.set_weights(old_model.get_weights())
+    model_2.set_weights(old_model.get_weights())
+    
+    inputs = [input_1, input_2]
+    outputs = [output_1, output_2]
+    
+    output = concatenate(outputs)
+    output = Dense(256,activation='relu')(output)
+    output = Dropout(0.3)(output)
+
+    output = Dense(num_classes,activation='softmax')(output)
+    new_model = Model(inputs,outputs=output)
+    
+    for layer in new_model.layers[:-2]:
+        layer.trainable = False
+
+    new_model.compile(loss='categorical_crossentropy',optimizer='RMSprop',metrics=['accuracy'])
+    return new_model
+
 
 
 #After data is inputed, we should augment the data in some way.
@@ -185,7 +244,8 @@ callbacks = [EarlyStopping(monitor='val_loss', patience = 8),
 
 #build the model
 #model = simple_model()
-model = multiInput_model()
+#model = multiInput_model()
+model = transfer_model()
 model.summary()
 
 history = model.fit_generator(train_generator,
