@@ -5,13 +5,14 @@
 import numpy
 from keras.datasets import mnist
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten, ConvLSTM2D, AveragePooling2D, TimeDistributed
+from keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, AveragePooling2D, Conv3D
 from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import applications
-from keras.layers.merge import concatenate
+#from tensorflow.keras.layers.merge import concatenate
+    
 
 
 #Writing a seed for reproducibility
@@ -20,13 +21,12 @@ numpy.random.seed(seed)
 
 #Load data from input, gotta write something for this. block
 
-train_data_dirA = '128Imagesbkg10A/train'
-train_data_dirB = '128Imagesbkg10B/train'
-validate_data_dirA = '128Imagesbkg10A/validation'
-validate_data_dirB = '128Imagesbkg10B/validation'
+train_data_dirA = 'noisy/A'
+train_data_dirB = 'noisy/B'
+train_data_dirC = 'noisy/C'
 
-epochs=20
-batch_size=32 #Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
+epochs=100
+batch_size=64 #Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
 
 
 img_width = 128
@@ -44,57 +44,43 @@ def LSTM_model():
     #create model - custom
     
     model = Sequential()
-    no_of_img = 2
-    #Adding additional convolution + maxpool layers 15/1/19
-    model.add(ConvLSTM2D(32, (5,5), input_shape=(no_of_img,img_width,img_height,1),return_sequences=True,dropout=0.2))
-    model.add(Activation('relu'))
-    model.add(TimeDistributed(AveragePooling2D((2,2))))
- 
-    model.add(ConvLSTM2D(64, (3,3),return_sequences=True,dropout=0.1))
-    model.add(Activation('relu'))
-    model.add(TimeDistributed(AveragePooling2D(pool_size=(2,2))))
+    no_of_img = 3
+    model.add(Conv2D(32,(5,5),input_shape=(img_width,img_height,no_of_img),activation='relu'))
+    model.add(Dropout(0.6))
+    model.add(AveragePooling2D(pool_size=(2,2)))
 
-    model.add(ConvLSTM2D(128, (3,3),return_sequences=True,dropout=0.1))
-    model.add(Activation('relu'))
-    model.add(TimeDistributed(AveragePooling2D(pool_size=(2,2))))
-    
-    '''
-    #model.add(ConvLSTM2D(256, (3,3),return_sequences=True))
-    #model.add(Activation('relu'))
-    #model.add(TimeDistributed(MaxPooling2D(pool_size=(2,2))))
-    #model.add(Dropout(0.2))
-    '''
+    model.add(Conv2D(64,(3,3),activation='relu'))
+    model.add(Dropout(0.4))
+    model.add(AveragePooling2D(pool_size=(2,2)))
+
+    model.add(Conv2D(128,(3,3),activation='relu'))
+    model.add(Dropout(0.4))
+    model.add(AveragePooling2D(pool_size=(2,2)))
 
     model.add(Flatten())
-    #Possible dense layer with our 128x128 number of pixels is too much, too high. We should add a few convolutional and maxpool layers beforehand.
-    
-    model.add(Dense(64,            #dimensionality of output space
-                    #input_shape=(128,128,1),        #Commented out as only the first layer needs input shape.
-                    ))
-    model.add(Activation('relu'))
-    #model.add(Dropout(0.2))
-                    
-                    
-                    #model.add(Dense(num_classes, activation='softmax'))
+    model.add(Dense(128,activation='relu'))
+
     model.add(Dense(num_classes,activation='softmax'))
     model.compile(loss='categorical_crossentropy',optimizer='RMSprop',metrics=['accuracy'])
     return model
 
 
 
+
 #After data is inputed, we should augment the data in some way.
-train_datagen = ImageDataGenerator(rescale=1./255,horizontal_flip=True,vertical_flip=True)
+train_datagen = ImageDataGenerator(rescale=1./255,horizontal_flip=True,vertical_flip=True, validation_split=0.3)
 
-test_datagen = ImageDataGenerator(rescale=1./255)
+#test_datagen = ImageDataGenerator(rescale=1./255)
 
-def generate_generator_multiple(generator,dir1, dir2, batch_size, img_width,img_height):
+def generate_generator_multiple(generator,dir1, dir2, dir3 ,batch_size, img_width,img_height,subset):
     genX1 = generator.flow_from_directory(dir1,
                                           color_mode='grayscale',
                                           target_size=(img_width,img_height),
                                           batch_size=batch_size,
                                           class_mode='categorical',
                                           shuffle=True,
-                                          seed=1)
+                                          seed=1,
+                                          subset=subset)
                                           #Same seed for consistency.
 
     genX2 = generator.flow_from_directory(dir2,
@@ -103,29 +89,54 @@ def generate_generator_multiple(generator,dir1, dir2, batch_size, img_width,img_
                                           batch_size=batch_size,
                                           class_mode='categorical',
                                           shuffle=True,
-                                          seed=1)
+                                          seed=1,
+                                          subset=subset) 
+    
+    genX3 = generator.flow_from_directory(dir3,
+                                          color_mode='grayscale',
+                                          target_size=(img_width,img_height),
+                                          batch_size=batch_size,
+                                          class_mode='categorical',
+                                          shuffle=True,
+                                          seed=1,
+                                          subset=subset) 
+    
+     
+
+    
+    #yield genX1.filenames,genX2.filenames,genX1.classes,genX2.classes
+
+    
     while True:
         X1i = genX1.next()
         X2i = genX2.next()
-        s = numpy.stack((X1i[0],X2i[0]))
-        b = numpy.transpose(s,(1,0,2,3,4))
-        yield b,X1i[1]    #Yields both images and their mutual label
+        X3i = genX3.next()
+        s = numpy.concatenate((X1i[0],X2i[0],X3i[0]),axis=3)
+        #s = numpy.squeeze(s)
+        #b = numpy.transpose(s,(1,2,3,0,4))
+        yield s,X1i[1]   #Yields both images and their mutual label
+
+img_width = 128
+img_height = 128
 
 
-
-train_generator = generate_generator_multiple(generator=train_datagen,
+validation_generator = generate_generator_multiple(generator=train_datagen,
                                               dir1=train_data_dirA,
                                               dir2=train_data_dirB,
+                                              dir3=train_data_dirC,
                                               batch_size=batch_size,
                                               img_width=img_width,
-                                              img_height=img_height)
+                                              img_height=img_height,
+                                              subset='validation')
 
-validation_generator = generate_generator_multiple(generator=test_datagen,
-                                                   dir1=validate_data_dirA,
-                                                   dir2=validate_data_dirB,
+train_generator = generate_generator_multiple(generator=train_datagen,
+                                                   dir1=train_data_dirA,
+                                                   dir2=train_data_dirB,
+                                                   dir3=train_data_dirC,
                                                    batch_size=batch_size,
                                                    img_width=img_width,
-                                                   img_height=img_height)
+                                                   img_height=img_height,
+                                                   subset='training')
 
 
 
