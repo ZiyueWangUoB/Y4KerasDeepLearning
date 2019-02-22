@@ -50,8 +50,8 @@ def simple_model():
         #Adding additional convolution + maxpool layers 15/1/19
     model.add(Conv2D(32, (5,5), input_shape=(img_width,img_height,1),strides=1))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2,2)))
-    #model.add(AveragePooling2D(pool_size=(2,2)))
+    #model.add(MaxPooling2D(pool_size=(2,2)))
+    model.add(AveragePooling2D(pool_size=(2,2)))
     model.add(Dropout(0.2))
 
     model.add(Conv2D(64, (3,3)))
@@ -69,7 +69,7 @@ def simple_model():
     '''  
     model.add(Conv2D(256, (3,3)))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2,2)))
+    model.add(AveragePooling2D(pool_size=(2,2)))
     model.add(Dropout(0.2))
     
     
@@ -125,7 +125,7 @@ validation_generator = train_datagen.flow_from_directory(
 	shuffle=True,
         subset='validation')
 
-callbacks = [EarlyStopping(monitor='val_loss', patience = 20),
+callbacks = [EarlyStopping(monitor='val_loss', patience = 10),
             ModelCheckpoint(filepath='best_model.h5', monitor='acc', save_best_only=True)]
 
 

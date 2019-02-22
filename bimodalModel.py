@@ -5,13 +5,13 @@
 import numpy
 from keras.datasets import mnist
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, AveragePooling2D, Conv3D
+from keras.layers import Dense, Dropout, Activation, Flatten, ConvLSTM2D, AveragePooling2D, TimeDistributed, Conv2D
 from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import applications
-#from tensorflow.keras.layers.merge import concatenate
+from keras.layers.merge import concatenate
     
 
 
@@ -26,7 +26,7 @@ train_data_dirB = 'noisy/B'
 train_data_dirC = 'noisy/C'
 
 epochs=100
-batch_size=64 #Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
+batch_size=16 #Reduce this is we see problems. If using bluebear, might be smart to increase this. At home, use 128 max.
 
 
 img_width = 128
@@ -40,7 +40,7 @@ num_classes = 9                 #9 different categories for the output, this is 
 
 #Let's define the model (simple)
 
-def LSTM_model():
+def Conv3D_model():
     #create model - custom
     
     model = Sequential()
@@ -64,8 +64,25 @@ def LSTM_model():
     model.compile(loss='categorical_crossentropy',optimizer='RMSprop',metrics=['accuracy'])
     return model
 
+def LSTM_model():
+    model = Sequential()
+    no_of_img = 3
+    
+    model.add(ConvLSTM2D(32,(5,5),input_shape=(no_of_img,img_width,img_height,1),activation='relu',return_sequences=True,dropout=0.2))
+    model.add(TimeDistributed(AveragePooling2D(pool_size=(2,2))))
 
+    model.add(ConvLSTM2D(64,(3,3),activation='relu',return_sequences=True,dropout=0.1))
+    model.add(TimeDistributed(AveragePooling2D(pool_size=(2,2))))
 
+    model.add(ConvLSTM2D(128,(3,3),activation='relu',return_sequences=True,dropout=0.1))
+    model.add(TimeDistributed(AveragePooling2D(pool_size=(2,2))))
+    
+    model.add(Flatten())
+    model.add(Dense(128,activation='relu'))
+
+    model.add(Dense(num_classes,activation='softmax'))
+    model.compile(loss='categorical_crossentropy',optimizer='RMSprop',metrics=['accuracy'])
+    return model
 
 #After data is inputed, we should augment the data in some way.
 train_datagen = ImageDataGenerator(rescale=1./255,horizontal_flip=True,vertical_flip=True, validation_split=0.3)
@@ -111,8 +128,9 @@ def generate_generator_multiple(generator,dir1, dir2, dir3 ,batch_size, img_widt
         X1i = genX1.next()
         X2i = genX2.next()
         X3i = genX3.next()
-        s = numpy.concatenate((X1i[0],X2i[0],X3i[0]),axis=3)
-        #s = numpy.squeeze(s)
+        s = numpy.stack((X1i[0],X2i[0],X3i[0]),axis=1)
+        #print(numpy.shape(s))
+        #break
         #b = numpy.transpose(s,(1,2,3,0,4))
         yield s,X1i[1]   #Yields both images and their mutual label
 
