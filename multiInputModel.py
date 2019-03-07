@@ -23,10 +23,11 @@ numpy.random.seed(seed)
 
 #Load data from input, gotta write something for this. block
 
-train_data_dirA = '128Imagesbkg10A/train'
-train_data_dirB = '128Imagesbkg10B/train'
-validate_data_dirA = '128Imagesbkg10A/validation'
-validate_data_dirB = '128Imagesbkg10B/validation'
+train_data_dirA = 'noisy/A'
+train_data_dirB = 'noisy/B'
+train_data_dirC = 'noisy/C'
+#validate_data_dirA = '128Imagesbkg10A/validation'
+#validate_data_dirB = '128Imagesbkg10B/validation'
 
 
 #train_data_dirA = '128ImagesBasicA2'
@@ -48,7 +49,7 @@ num_classes = 9                 #9 different categories for the output, this is 
 
 #Let's define the model (simple)
 
-'''
+
 def multiInput_model():
     #create model - custom
     
@@ -130,7 +131,7 @@ def multiInput_model():
 
     return model
 
-'''
+
 
 def build_base():
     
@@ -151,8 +152,8 @@ def build_base():
       
 
     output = Flatten()(output)
-    #output = Dense(128,activation='relu')(output)
-    #output = Dense(num_classes,activation='softmax')(output)
+    output = Dense(128,activation='relu')(output)
+    output = Dense(num_classes,activation='softmax')(output)
    
     model = Model(inputs=input_, outputs=output)
     
@@ -163,25 +164,29 @@ def transfer_model():
 
     input_1, output_1, model_1 = build_base()
     input_2, output_2, model_2 = build_base()
+    input_3, output_3, model_3 = build_base()
+
 
     old_model = load_model('80modelbkg10A/best_model.h5')
     old_model.layers.pop()
-    old_model.layers.pop()
+    #old_model.layers.pop()
 
     model_1.set_weights(old_model.get_weights())
     model_2.set_weights(old_model.get_weights())
-    
-    inputs = [input_1, input_2]
-    outputs = [output_1, output_2]
+    model_3.set_weights(old_model.get_weights())
+
+    inputs = [input_1, input_2, input_3]
+    outputs = [output_1, output_2, output_3]
     
     output = concatenate(outputs)
-    output = Dense(256,activation='relu')(output)
-    output = Dropout(0.3)(output)
+    output = Average()(outputs)
+    #output = Dense(128,activation='relu')(output)
+    #output = Dropout(0.3)(output)
 
     output = Dense(num_classes,activation='softmax')(output)
     new_model = Model(inputs,outputs=output)
     
-    for layer in new_model.layers[:-2]:
+    for layer in new_model.layers[:-1]:
         layer.trainable = False
 
     new_model.compile(loss='categorical_crossentropy',optimizer='RMSprop',metrics=['accuracy'])
@@ -192,18 +197,20 @@ def transfer_model():
 #After data is inputed, we should augment the data in some way.
 train_datagen = ImageDataGenerator(rescale=1./255,
         horizontal_flip=True,
-        vertical_flip=True)
+        vertical_flip=True,
+        validation_split=0.3)
 
 test_datagen = ImageDataGenerator(rescale=1./255)
 
 
-def generate_generator_multiple(generator,dir1, dir2, batch_size, img_width,img_height):
+def generate_generator_multiple(generator,dir1, dir2, dir3, batch_size, img_width,img_height,subset):
     genX1 = generator.flow_from_directory(dir1,
                                           color_mode='grayscale',
                                           target_size=(img_width,img_height),
                                           batch_size=batch_size,
                                           class_mode='categorical',
                                           shuffle=True,
+                                          subset=subset,
                                           seed=1)
                                           #Same seed for consistency.
 
@@ -213,27 +220,44 @@ def generate_generator_multiple(generator,dir1, dir2, batch_size, img_width,img_
                                           batch_size=batch_size,
                                           class_mode='categorical',
                                           shuffle=True,
+                                          subset=subset,
                                           seed=1)
+    
+    genX3 = generator.flow_from_directory(dir3,
+                                          color_mode='grayscale',
+                                          target_size=(img_width,img_height),
+                                          batch_size=batch_size,
+                                          class_mode='categorical',
+                                          shuffle=True,
+                                          subset=subset,
+                                          seed=1)
+ 
+    
     while True:
         X1i = genX1.next()
         X2i = genX2.next()
-        yield [X1i[0],X2i[0]],X1i[1]    #Yields both images and their mutual label
+        X3i = genX3.next()
+        yield [X1i[0],X2i[0],X3i[0]],X1i[1]    #Yields both images and their mutual label
 
 
 
 train_generator = generate_generator_multiple(generator=train_datagen,
                                               dir1=train_data_dirA,
                                               dir2=train_data_dirB,
+                                              dir3=train_data_dirC,
                                               batch_size=batch_size,
                                               img_width=img_width,
-                                              img_height=img_height)
+                                              img_height=img_height,
+                                              subset='training')
 
-validation_generator = generate_generator_multiple(generator=test_datagen,
-                                                   dir1=validate_data_dirA,
-                                                   dir2=validate_data_dirB,
+validation_generator = generate_generator_multiple(generator=train_datagen,
+                                                   dir1=train_data_dirA,
+                                                   dir2=train_data_dirB,
+                                                   dir3=train_data_dirC,
                                                    batch_size=batch_size,
                                                    img_width=img_width,
-                                                   img_height=img_height)
+                                                   img_height=img_height,
+                                                   subset='validation')
                                 
 
 

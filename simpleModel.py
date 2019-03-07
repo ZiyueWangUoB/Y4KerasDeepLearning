@@ -5,7 +5,7 @@ Adapted by Ziyue Wang for Y4 project. Created on 14/1/2019
 import numpy
 from keras.datasets import mnist
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization, AveragePooling2D
+from keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D, BatchNormalization, AveragePooling2D, MaxPooling2D
 from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 from keras.optimizers import Adam, RMSprop
@@ -18,7 +18,8 @@ numpy.random.seed(seed)
 
 #Load data from input, gotta write something for this. block
 
-train_data_dir = '128ImagesNoisyA/train'
+train_data_dir = 'unbiasedShear/shear5/A'
+#train_data_dir = '128Imagesbkg515A/train'
 #validation_data_dir = '128ImagesNoisyA/validation'
 #nb_train_samples = 1400
 #nb_validation_samples=600
@@ -50,10 +51,11 @@ def simple_model():
         #Adding additional convolution + maxpool layers 15/1/19
     model.add(Conv2D(32, (5,5), input_shape=(img_width,img_height,1),strides=1))
     model.add(Activation('relu'))
-    #model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(AveragePooling2D(pool_size=(2,2)))
-    model.add(Dropout(0.2))
+    model.add(MaxPooling2D(pool_size=(2,2)))
+    #model.add(AveragePooling2D(pool_size=(2,2)))
+    model.add(Dropout(0.1))
 
+    
     model.add(Conv2D(64, (3,3)))
     model.add(Activation('relu'))
     #model.add(MaxPooling2D(pool_size=(2,2)))
@@ -66,7 +68,7 @@ def simple_model():
     model.add(AveragePooling2D(pool_size=(2,2)))
     model.add(Dropout(0.1))
      
-    '''  
+    '''    
     model.add(Conv2D(256, (3,3)))
     model.add(Activation('relu'))
     model.add(AveragePooling2D(pool_size=(2,2)))
@@ -103,8 +105,6 @@ train_datagen = ImageDataGenerator(
         horizontal_flip=True,
         vertical_flip=True,
         validation_split=0.3)
-
-test_datagen = ImageDataGenerator(rescale=1./255)
 
 #Images should be inputed the same way as the code found in main to avoid confusion
 train_generator = train_datagen.flow_from_directory(
